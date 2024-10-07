@@ -1,0 +1,57 @@
+/* src/components/WelcomePage.css */
+.welcome-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+    animation: fadeIn 1s ease-in-out; /* Hiệu ứng fadeIn */
+  }
+  
+  .welcome-content {
+    text-align: center;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    color: #333;
+    animation: slideIn 1s ease; /* Hiệu ứng slideIn cho tiêu đề */
+  }
+  
+  .loading-animation {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #666;
+    animation: bounce 1.5s infinite; /* Hiệu ứng nhảy cho loading */
+  }
+  
+  /* Các hiệu ứng animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateY(-50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  

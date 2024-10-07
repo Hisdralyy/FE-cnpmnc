@@ -1,0 +1,86 @@
+.homepage-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-section {
+  flex: 1;
+  padding: 20px;
+  margin-top: 60px;
+}
+
+header {
+  background-color: #1f2937;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 250px;
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
+
+/* Thiết lập margin-left ban đầu cho footer */
+.footer {
+  margin-left: 250px; /* Chiều rộng sidebar mở rộng */
+  padding: 20px;
+  text-align: center;
+  background-color: #1f2937;
+  color: white;
+  transition: margin-left 0.3s ease;
+}
+/* Thiết lập margin-left khi sidebar được thu gọn */
+.sidebar-collapsed .footer {
+  margin-left: 60px; /* Chiều rộng sidebar thu gọn */
+}
+
+
+/* Styles for collapsed sidebar */
+.sidebar-collapsed .content-wrapper {
+  margin-left: 60px;
+}
+
+.sidebar-collapsed header {
+  left: 60px;
+}
+  
+
+.welcome-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.header-button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 15px;
+}
+
+.header-button:hover {
+  color: #e5e7eb;
+}
+
