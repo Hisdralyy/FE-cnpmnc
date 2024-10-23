@@ -10,9 +10,9 @@ const Login = () => {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md mx-auto bg-purple-800 p-8 rounded-lg shadow-lg"
+        className="max-w-md mx-auto p-8 rounded-lg shadow-lg"
       >
-        <h1 className="text-3xl font-bold mb-6 text-center">Đăng nhập</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-black">Đăng nhập</h1>
         <form>
           <div className="mb-4">
             <Input type="email" placeholder="Email" required className="w-full" />
@@ -20,12 +20,12 @@ const Login = () => {
           <div className="mb-6">
             <Input type="password" placeholder="Mật khẩu" required className="w-full" />
           </div>
-          <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600">
+          <Button type="submit" className="w-full bg-purple-900 hover:bg-purple-700 text-white">
             Đăng nhập
           </Button>
         </form>
         <p className="mt-4 text-center">
-          Chưa có tài khoản? <a href="/register" className="text-purple-300 hover:underline">Đăng ký ngay</a>
+          Chưa có tài khoản? <a href="/register" className="text-purple-900 hover:underline">Đăng ký ngay</a>
         </p>
       </motion.div>
     </div>

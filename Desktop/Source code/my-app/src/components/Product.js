@@ -9,6 +9,7 @@ import { Drawer } from './ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Link } from 'react-router-dom';
 
 
 const ProductPage = () => {
@@ -34,15 +35,15 @@ const ProductPage = () => {
   // Initial products data
   useEffect(() => {
     setProducts([
-      { id: 1, name: 'iPhone 16 Pro Max 256GB', price: 999, image: '/api/placeholder/400/300', stock: 10, category: 'phones' },
-      { id: 2, name: 'Ultra-thin Tablet Y', price: 599, image: '/api/placeholder/400/300', stock: 5, category: 'tablets' },
-      { id: 3, name: 'Professional Laptop Z', price: 1499, image: '/api/placeholder/400/300', stock: 8, category: 'laptops' },
-      { id: 4, name: 'Tủ lạnh Hitachi Inverter 406 lít', price: 1250, image: '/api/placeholder/400/300', stock: 10, category: 'Tủ lạnh' },
-      { id: 5, name: 'Máy giặt Samsung 13 kg Inverter', price: 2400, image: '/api/placeholder/400/300', stock: 5, category: 'Máy giặt' },
-      { id: 6, name: 'Smart Tivi LED LG 4K 43 inch', price: 3700, image: '/api/placeholder/400/300', stock: 8, category: 'Tivi' },
-      { id: 7, name: 'Máy lạnh Samsung Inverter 1.5 HP', price: 1200, image: '/api/placeholder/400/300', stock: 10, category: 'Máy lạnh' },
-      { id: 8, name: 'Loa xách tay Marshall Stanmore 3', price: 1700, image: '/api/placeholder/400/300', stock: 5, category: 'Loa' },
-      { id: 9, name: 'Nồi cơm điện tử Sunhouse 1 lít', price: 500, image: '/api/placeholder/400/300', stock: 8, category: 'Gia dụng' },
+      { id: 1, name: 'Iphone 16 Promax', price: "29.650.000đ", image:  'images/16promax.png', stock: 12, category: 'Điện thoại' },
+      { id: 2, name: 'Ultra-thin Tablet Y', price: "12.650.000đ", image:  'images/table.png', stock: 5, category: 'Máy tính bảng' },
+      { id: 3, name: 'Professional Laptop Z', price: "42.840.000₫", image: 'images/macbock.jpeg', stock: 8, category: 'laptops' },
+      { id: 4, name: 'Tủ lạnh Hitachi Inverter 406 lít', price: "5.190.000đ", image: 'images/tulanh.jpg', stock: 10, category: 'Tủ lạnh' },
+      { id: 5, name: 'Máy giặt Samsung 13 kg Inverter', price: "6.790.000đ", image: 'images/maygiat.jpg', stock: 5, category: 'Máy giặt' },
+      { id: 6, name: 'Smart Tivi LED LG 4K 43 inch', price: "16.890.000đ", image: 'images/tivi.jpg', stock: 8, category: 'Tivi' },
+      { id: 7, name: 'Máy lạnh Samsung Inverter 1.5 HP', price: "6.490.000đ", image: 'images/maylanh.jpg', stock: 10, category: 'Máy lạnh' },
+      { id: 8, name: 'Loa xách tay Marshall Stanmore 3', price: "11.040.000đ", image: 'images/loaxachtay.jpg', stock: 5, category: 'Loa' },
+      { id: 9, name: 'Nồi cơm điện tử Sunhouse 1 lít', price: "2.990.000đ", image: 'images/noicomdien.jpg', stock: 8, category: 'Gia dụng' },
     ]);
   }, []);
 
@@ -89,10 +90,10 @@ const ProductPage = () => {
     >
       <div className="container mx-auto flex items-center justify-between">
         <motion.div 
-          className="text-2xl font-bold text-purple-800"
+          className="text-xl font-bold text-purple-800"
           whileHover={{ scale: 1.1 }}
         >
-          MyStore
+        <Link to="/">WareHouse Smart</Link>
         </motion.div>
         <div className="hidden md:flex flex-grow mx-8">
           <Input
@@ -136,13 +137,13 @@ const ProductPage = () => {
     <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)}>
       <div className="p-4 bg-white h-full w-64">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-purple-800">Categories</h2>
+          <h2 className="text-2xl font-bold text-purple-800">Sản phẩm</h2>
           <Button variant="ghost" onClick={() => setSidebarOpen(false)}>
             <X className="h-6 w-6 text-purple-800" />
           </Button>
         </div>
         <div className="space-y-2">
-          {['all', 'phones', 'tablets', 'laptops', 'Tủ lạnh', 'Máy giặt', 'Tivi', 'Máy lạnh', 'Loa', 'Gia dụng'].map((category) => (
+          {['all', 'Điện thoại', 'Máy tính bảng', 'laptops', 'Tủ lạnh', 'Máy giặt', 'Tivi', 'Máy lạnh', 'Loa', 'Gia dụng'].map((category) => (
             <motion.button
               key={category}
               whileHover={{ scale: 1.05, backgroundColor: '#F3E8FF' }}
@@ -185,8 +186,8 @@ const ProductPage = () => {
             </CardHeader>
             <CardContent className="p-4">
               <CardTitle className="text-lg font-semibold text-purple-800">{product.name}</CardTitle>
-              <p className="text-2xl font-bold mt-2 text-purple-600">${product.price}</p>
-              <p className="text-sm text-gray-500 mt-1">In stock: {product.stock}</p>
+              <p className="text-2xl font-bold mt-2 text-purple-600">{product.price}</p>
+              <p className="text-sm text-gray-500 mt-1">Trong kho: {product.stock}</p>
               <div className="flex items-center mt-2">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-current text-yellow-400" />
@@ -195,16 +196,16 @@ const ProductPage = () => {
               </div>
               <div className="flex space-x-2 mt-4">
                 <Button 
-                  className="flex-grow bg-purple-600 hover:bg-purple-700 text-white"
+                  className="flex-grow bg-purple-900 hover:bg-purple-700 text-white"
                   onClick={() => addToCart(product)}
                 >
-                  Add to Cart
+                  Thêm vào đơn hàng
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => setQuickViewProduct(product)}
                 >
-                  Quick View
+                  Xem nhanh
                 </Button>
               </div>
             </CardContent>
@@ -238,9 +239,9 @@ const ProductPage = () => {
           <div>
             <p className="text-3xl font-bold text-purple-600 mb-4">${product.price}</p>
             <p className="text-gray-600 mb-4">
-              {product.description || "Experience premium quality and exceptional performance with this product. Perfect for those who demand the best in technology and design."}
+              {product.description || "Trải nghiệm chất lượng cao cấp và hiệu suất vượt trội với sản phẩm này. Hoàn hảo cho những ai yêu cầu công nghệ và thiết kế tốt nhất."}
             </p>
-            <p className="text-sm text-gray-500 mb-4">In stock: {product.stock}</p>
+            <p className="text-sm text-gray-500 mb-4">Trong kho: {product.stock}</p>
             <div className="flex items-center mb-4">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-5 w-5 fill-current text-yellow-400" />
@@ -248,13 +249,13 @@ const ProductPage = () => {
               <span className="ml-2 text-sm text-gray-600">(4.5)</span>
             </div>
             <Button 
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full bg-purple-900 hover:bg-purple-700 text-white"
               onClick={() => {
                 addToCart(product);
                 onClose();
               }}
             >
-              Add to Cart
+              Thêm vào đơn hàng
             </Button>
           </div>
         </div>
@@ -317,7 +318,7 @@ const ProductPage = () => {
         <Sidebar />
         <main className="flex-grow">
           <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-purple-800 mb-6">Our Premium Products</h1>
+            <h1 className="text-2xl font-bold text-purple-900 mb-6 italic">Sản phẩm cao cấp của chúng tôi</h1>
             <Tabs defaultValue="grid" className="mb-6">
               <TabsList>
                 <TabsTrigger value="grid">Grid View</TabsTrigger>
@@ -339,20 +340,20 @@ const ProductPage = () => {
                       <div className="flex-grow">
                         <h3 className="text-lg font-semibold text-purple-800">{product.name}</h3>
                         <p className="text-xl font-bold text-purple-600">${product.price}</p>
-                        <p className="text-sm text-gray-500">In stock: {product.stock}</p>
+                        <p className="text-sm text-gray-500">Trong kho: {product.stock}</p>
                       </div>
                       <div className="flex flex-col space-y-2">
                         <Button 
                           className="bg-purple-600 hover:bg-purple-700 text-white"
                           onClick={() => addToCart(product)}
                         >
-                          Add to Cart
+                          Thêm vào đơn hàng
                         </Button>
                         <Button 
                           variant="outline"
                           onClick={() => setQuickViewProduct(product)}
                         >
-                          Quick View
+                          Xem nhanh
                         </Button>
                       </div>
                     </motion.div>
