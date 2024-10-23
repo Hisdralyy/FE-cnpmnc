@@ -10,9 +10,9 @@ const Register = () => {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md mx-auto bg-purple-800 p-8 rounded-lg shadow-lg"
+        className="max-w-md mx-auto bg-purple- p-8 rounded-lg shadow-lg"
       >
-        <h1 className="text-3xl font-bold mb-6 text-center">Đăng ký</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center ">Đăng ký</h1>
         <form>
           <div className="mb-4">
             <Input type="text" placeholder="Tên công ty" required className="w-full" />
@@ -29,12 +29,12 @@ const Register = () => {
           <div className="mb-6">
             <Input type="password" placeholder="Mật khẩu" required className="w-full" />
           </div>
-          <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600">
+          <Button type="submit" className="w-full bg-purple-900 hover:bg-purple-500 text-white">
             Đăng ký ngay
           </Button>
         </form>
         <p className="mt-4 text-center">
-          Đã có tài khoản? <a href="/login" className="text-purple-300 hover:underline">Đăng nhập</a>
+          Đã có tài khoản? <a href="/login" className="text-purple-700 hover:underline">Đăng nhập</a>
         </p>
       </motion.div>
     </div>

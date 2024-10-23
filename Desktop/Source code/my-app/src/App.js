@@ -12,7 +12,7 @@ function App() {
     <Router>
       {/* Routes: quản lý các route */}
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage/> } />
         <Route path="/solution" element={<Solutions />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
