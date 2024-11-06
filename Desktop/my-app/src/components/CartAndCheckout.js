@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 
+
 const parsePrice = (price) => {
   if (!price || typeof price !== 'string') return 0;
   if (price.includes('NaN')) return 0;
@@ -17,16 +18,15 @@ const parsePrice = (price) => {
 
 // định dạng giá thành số vnd 
 const formatPrice = (price) => {
-  if (typeof price !== 'number' || isNaN(price)) {
-    return '0đ';
+  const numPrice = Number(price);
+  if (isNaN(numPrice)) {
+    return '0 ₫';
   }
-  try {
-    return price.toLocaleString('vi-VN') + 'đ';
-  } catch (error) {
-    return '0đ';
-  }
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(numPrice);
 };
-
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   const numericPrice = parsePrice(item.price);
 
@@ -89,37 +89,55 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 };
 
 // hàm tính tổng 
-const CartSummary = ({ cartTotal, shipping = 0 }) => (
-  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-    <div className="flex justify-between text-sm">
-      <span className="text-gray-600">Tổng tiền hàng</span>
-      <span className="font-medium">{formatPrice(cartTotal)}</span>
-    </div>
-    <div className="pt-2 border-t">
-      <div className="flex justify-between text-lg font-bold">
-        <span className="text-green-600">Tổng cộng</span>
-        <span className="text-green-600">{formatPrice(cartTotal + shipping)}</span>
+const CartSummary = ({ cartTotal }) => {
+  //Phí ship là 0 VNĐ, sẽ hiển thị là "FREE"
+  
+  return (
+    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-600">Tổng tiền hàng</span>
+        <span className="font-medium">{formatPrice(cartTotal)}</span>
+      </div>
+      
+      {/* Hiển thị phí ship là "FREE" với kiểu chữ nổi bật */}
+      <div className="flex justify-between text-sm pt-2 items-center">
+        <span className="text-gray-600">Phí ship</span>
+        <span className="font-medium text-green-500  font-bold tracking-wide bg-green-100 px-3 py-1 rounded-full shadow-sm">
+          Miễn phí 
+        </span>
+      </div>
+      <div className="pt-2 border-t">
+        <div className="flex justify-between text-lg font-bold">
+          <span className="text-green-600">Tổng cộng</span>
+          {/* Tính tổng tiền bao gồm phí ship */}
+          <span className="text-green-600">{formatPrice(cartTotal)}</span>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // xác nhận đơn hàng thành công của đại lý 
 const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
   const [showDetails, setShowDetails] = useState(false);
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
   
+// Hàm format giá tiền
+const formatPrice = (price) => {
+  const numPrice = Number(price);
+  if (isNaN(numPrice)) {
+    return '0 ₫';
+  }
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(numPrice);
+};
+
   const handleViewDetails = () => {
     setShowDetails(true);
   };
 // form xem chi tiết đơn hàng 
-  const OrderDetailsView = () => {
+  const OrderDetailsView = () => {    
     return (
       <AnimatePresence>
         {showDetails && (
@@ -241,7 +259,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
                 </div>
                 
                 {/* Order Items */} 
-                {/* <div className="space-y-4">
+                <div className="space-y-4">
                   <h3 className="font-semibold">Chi tiết sản phẩm</h3>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full">
@@ -259,23 +277,27 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
                             <td className="px-4 py-3">
                               <div>
                                 <p className="font-medium">{item.name}</p>
-                                <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                                <p className="text-sm text-gray-500">SKU: {item.sku}</p>  
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center">{item.quantity}</td>
-                            <td className="px-4 py-3 text-right">{formatPrice(item.price)}</td>
-                            <td className="px-4 py-3 text-right">{formatPrice(item.price * item.quantity)}</td>
+                            <td className="px-4 py-3 text-center">{item.quantity}</td> 
+                            <td className="px-4 py-3 text-right">{(item.price)}</td>
+                            <td className="px-4 py-3 text-right">{(item.price * item.quantity)}</td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot className="bg-gray-50">
                         <tr>
                           <td colSpan="3" className="px-4 py-3 text-right font-medium">Tạm tính:</td>
-                          <td className="px-4 py-3 text-right font-medium">{formatPrice(orderDetails?.subtotal || 0)}</td>
+                          <td className="px-4 py-3 text-right font-medium">{(orderDetails?.subtotal || 0)}</td>
                         </tr>
                         <tr>
                           <td colSpan="3" className="px-4 py-3 text-right font-medium">Phí vận chuyển:</td>
-                          <td className="px-4 py-3 text-right font-medium">{formatPrice(orderDetails?.shipping || 0)}</td>
+                          <td className="px-4 py-3 text-right font-medium">
+                          <span className="text-green-500 font-bold tracking-wide bg-green-100 px-3 py-1 rounded-full shadow-sm">
+      Miễn phí
+    </span>
+                          </td>
                         </tr>
                         <tr className="border-t">
                           <td colSpan="3" className="px-4 py-3 text-right font-medium">Tổng cộng:</td>
@@ -284,7 +306,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
                       </tfoot>
                     </table>
                   </div>
-                </div> */}
+                </div>
               </div>
 
               {/* Footer */}
@@ -400,13 +422,14 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
   );
 };
 
+//thẻ thanh toán chính 
 const CartAndCheckout = ({ cart = [], setCart }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
 
-  // Kiểm tra trạng thái đăng nhập khi component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
@@ -429,25 +452,81 @@ const CartAndCheckout = ({ cart = [], setCart }) => {
     setCart(updatedCart);
   };
 
-  const handleCheckoutClick = () => {
+  const createOrder = async () => {
+    try {
+      // Lấy managerId từ localStorage (giả sử đã được lưu khi đăng nhập)
+      //const managerId = localStorage.getItem('managerId') || "default-manager-id";
+
+      const managerId = null; // Đặt managerId là null
+      
+      // Chuẩn bị dữ liệu đơn hàng theo format yêu cầu
+      const orderData = {
+        agencyId: 1, // Có thể lấy từ thông tin user đã đăng nhập
+        note: "Đơn hàng mới",
+        managerId: managerId,
+        items: cart.map(item => ({
+          productId: item.id.toString(),
+          quantity: item.quantity
+        }))
+      };
+
+      // Gọi API tạo đơn hàng
+      const response = await fetch('http://localhost:5018/api/Order/Create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Thêm token nếu cần
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  };
+
+
+  const handleCheckoutClick = async () => {
     if (!isAuthenticated) {
-      // Lưu giỏ hàng vào localStorage trước khi chuyển hướng
       localStorage.setItem('pendingCart', JSON.stringify(cart));
       navigate('/login?redirect=checkout');
       return;
     }
-    
-    // Xử lý xác nhận đơn hàng cho người dùng đã đăng nhập
-    setIsCartOpen(false);
-    setShowOrderConfirmation(true);
-  };
 
+    try {
+      // Tạo đơn hàng trên server
+      const orderResult = await createOrder();
+      
+      // Cập nhật orderDetails với thông tin từ server
+      setOrderDetails({
+        orderId: orderResult.id || 'DH' + Date.now(),
+        total: cartTotal,
+        items: cart
+      });
+
+      // Đóng giỏ hàng và hiển thị xác nhận
+      setIsCartOpen(false);
+      setShowOrderConfirmation(true);
+    } catch (error) {
+      // Xử lý lỗi - có thể hiển thị thông báo lỗi cho người dùng
+      console.error('Failed to create order:', error);
+      alert('Không thể tạo đơn hàng. Vui lòng thử lại sau.');
+    }
+  };// đã thay 
+
+//Ẩn thông báo xác nhận đơn hàng khi người dùng muốn đóng nó.
+//Xóa giỏ hàng để chuẩn bị cho lần mua sắm tiếp theo sau khi đã hoàn tất đơn hàng.
   const handleOrderConfirmationClose = () => {
     setShowOrderConfirmation(false);
     setCart([]); // Xóa giỏ hàng sau khi đặt hàng thành công
   };
-
-  
   
   const CartDrawer = () => (
     <AnimatePresence>
@@ -552,10 +631,7 @@ const CartAndCheckout = ({ cart = [], setCart }) => {
       <OrderConfirmationModal
         isOpen={showOrderConfirmation}
         onClose={handleOrderConfirmationClose}
-        orderDetails={{
-          orderId: 'DH' + Date.now(),
-          total: cartTotal,
-        }}
+        orderDetails={orderDetails}
         
       />
     </>

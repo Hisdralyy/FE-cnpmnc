@@ -11,7 +11,17 @@ import { Badge } from './ui/badge';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Link } from 'react-router-dom';
 import axios from 'axios';  
-
+const categoryMap = {
+  1: 'Điện thoại',
+  2: 'Tables',
+  3: 'Laptops', 
+  4: 'Tủ lạnh',
+  5: 'Máy giặt',
+  6: 'Tivi',
+  7: 'Máy lạnh',
+  8: 'Loa',
+  1001: 'Gia dụng'
+};
 const ProductPage = () => {
   // States
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,27 +74,28 @@ const ProductPage = () => {
             style: 'currency', 
             currency: 'VND' 
           }).format(item.price || 0),
-          image: item.image || '/placeholder.png',
+          image: item.image || '/images/placeholder.png',
           stock: item.quantity || 0,
-          category: item.category || 'Uncategorized'
+          categoryId: item.categoryId, // Thêm categoryId
+          category:categoryMap[item.categoryId] || 'Uncategorized' // Map category name từ categoryId
+      
         }));
   
         console.log('Transformed Products:', transformedProducts);
   
-        // Lấy danh sách categories duy nhất từ sản phẩm
-        const uniqueCategories = ['all', ...new Set(transformedProducts.map(product => product.category))];
-        setCategories(uniqueCategories);
-        
-        setProducts(transformedProducts);
-        setFilteredProducts(transformedProducts);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-  
+         // Lấy danh sách categories từ categoryMap
+      const uniqueCategories = ['all', ...new Set(Object.values(categoryMap))];
+      setCategories(uniqueCategories);
+      
+      setProducts(transformedProducts);
+      setFilteredProducts(transformedProducts);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
     fetchProducts();
   }, []);
   
@@ -141,21 +152,22 @@ const ProductPage = () => {
             cartTotal={cartTotal}
             isAuthenticated={isAuthenticated}
           />
-          <motion.button
+          
+          {/* <motion.button // Thông báo 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="p-2 rounded-full bg-purple-100 text-purple-600"
           >
             <Bell className="h-6 w-6" />
           </motion.button>
-          <motion.button
+          <motion.button //3 gạch
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="p-2 rounded-full bg-purple-100 text-purple-600 md:hidden"
             onClick={() => setSidebarOpen(true)}
-          >
+          > 
             <Menu className="h-6 w-6" />
-          </motion.button>
+          </motion.button> */}
         </div>
       </div>
     </motion.header>
@@ -172,26 +184,38 @@ const ProductPage = () => {
           </Button>
         </div>
         <div className="space-y-2">
-          {['all', 'Điện thoại', 'Máy tính bảng', 'laptops', 'Tủ lạnh', 'Máy giặt', 'Tivi', 'Máy lạnh', 'Loa', 'Gia dụng'].map((category) => (
-            <motion.button
-              key={category}
-              whileHover={{ scale: 1.05, backgroundColor: '#F3E8FF' }}
-              whileTap={{ scale: 0.95 }}
-              className={`w-full p-3 text-left rounded-lg ${
-                selectedCategory === category ? 'bg-purple-200 text-purple-800' : 'text-gray-600'
-              }`}
-              onClick={() => {
-                setSelectedCategory(category);
-                setSidebarOpen(false);
-              }}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </motion.button>
-          ))}
-        </div>
+        {categories.map((category) => (
+          <motion.button
+            key={category}
+            whileHover={{ scale: 1.05, backgroundColor: '#F3E8FF' }}
+            whileTap={{ scale: 0.95 }}
+            className={`w-full p-3 text-left rounded-lg ${
+              selectedCategory === category ? 'bg-purple-200 text-purple-800' : 'text-gray-600'
+            }`}
+            onClick={() => {
+              setSelectedCategory(category);
+              setSidebarOpen(false);
+            }}
+          >
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </motion.button>
+        ))}
       </div>
-    </Drawer>
+    </div>
+  </Drawer>
+);
+//Filter sản phẩm dựa trên categoryId
+useEffect(() => {
+  const filteredByCategory = selectedCategory === 'all' 
+    ? products 
+    : products.filter(product => categoryMap[product.categoryId] === selectedCategory);
+    
+  const filteredBySearch = filteredByCategory.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  setFilteredProducts(filteredBySearch);
+}, [selectedCategory, searchQuery, products]);
 
  // Product Grid Component with loading and error handling
  const ProductGrid = () => {
@@ -247,7 +271,7 @@ const ProductPage = () => {
                 alt={product.name} 
                 className="w-full h-48 object-cover"
                 onError={(e) => {
-                  e.target.src = '/placeholder.png'; // Fallback image
+                  e.target.src = '/images/placeholder.png'; // Fallback image
                 }}
               />
             </CardHeader>

@@ -8,6 +8,8 @@ import { useToast } from './ui/use-toast';
 import { Alert, AlertDescription } from './ui/alert';
 import './login.css'; 
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +18,7 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Kiểm tra local storage khi component mount
   React.useEffect(( ) => {
@@ -35,7 +38,7 @@ const LoginForm = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5018/api/Account/SignIn', {
+      const response = await fetch('http://localhost:5018/api/Account/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,14 +57,15 @@ const LoginForm = () => {
           localStorage.removeItem('rememberedEmail');
           localStorage.removeItem('rememberedPassword');
         }
-
         // Lưu token và chuyển hướng
         localStorage.setItem('token', data.token);
         toast({
           title: "Đăng nhập thành công",
           description: "Chào mừng bạn quay trở lại!",
-          duration: 3000,
+          duration: 10000,
         });
+
+
         // Chuyển hướng đến trang chủ sau khi đăng nhập
         window.location.href = '/Product';
       } else {
