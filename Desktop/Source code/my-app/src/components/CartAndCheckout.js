@@ -1,72 +1,163 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  X, ShoppingCart, Minus, Plus, Trash2
+import {
+  X, ShoppingCart, Minus, Plus, Trash2, CheckCircle2,
+  Clock, ShieldCheck, Package2, ChevronRight, Calendar,
+  Store, CreditCard, MapPin, FileText
 } from 'lucide-react';
 import { Button } from './ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import QuantityInput from "./QuantityInput";
 
-// Hàm để chuyển chuỗi giá trị thành số
+const exportOrderToPDF = (orderDetails) => {
+  // Khởi tạo PDF với font hỗ trợ tiếng Việt
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  // Thêm font để hỗ trợ tiếng Việt
+  doc.addFileToVFS('times-vietnam.ttf');
+  doc.addFont('times-vietnam.ttf', 'Times', 'normal');
+  doc.setFont('Times');
+  doc.addFont('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf', 'Roboto', 'normal');
+  doc.addFont('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Bold.ttf', 'Roboto', 'bold');
+  doc.setFont('Roboto');
+
+  // Header
+  doc.setFontSize(20);
+  doc.text('CHI TIẾT ĐƠN HÀNG', 105, 20, { align: 'center' });
+
+  // Thông tin cơ bản
+  doc.setFontSize(14);
+  doc.text('Thông tin cơ bản', 14, 40);
+
+  doc.setFontSize(10);
+  doc.text(`Ngày đặt hàng: ${new Date().toLocaleDateString('vi-VN')}`, 14, 50);
+  doc.text(`Đại lý: Công ty TNHH ABC`, 14, 57);
+  doc.text(`Phương thức thanh toán: Chuyển khoản ngân hàng`, 14, 64);
+
+  // Thông tin giao hàng
+  doc.setFontSize(14);
+  doc.text('Thông tin giao hàng', 14, 80);
+
+  doc.setFontSize(10);
+  doc.text('Địa chỉ giao hàng:', 14, 90);
+  doc.text('123 Đường ABC, Phường XYZ, Quận 1, TP.HCM', 14, 97);
+  doc.text('Phương thức vận chuyển: Giao hàng nhanh', 14, 104);
+
+  // Bảng chi tiết sản phẩm
+  doc.setFontSize(14);
+  doc.text('Chi tiết sản phẩm', 14, 120);
+
+  // Tạo bảng sản phẩm
+  const tableColumns = [
+    { header: 'Sản phẩm', font: 'Roboto', dataKey: 'name' },
+    { header: 'SKU', dataKey: 'sku' },
+    { header: 'Số lượng', dataKey: 'quantity' },
+    { header: 'Đơn giá', dataKey: 'price' },
+    { header: 'Thành tiền', dataKey: 'total' }
+  ];
+
+  const tableRows = orderDetails?.items?.map(item => ({
+    name: item.name,
+    sku: item.sku,
+    quantity: item.quantity,
+    price: item.price,
+    total: formatPrice(parsePrice(item.price) * item.quantity)
+  })) || [];
+
+  doc.autoTable({
+    startY: 130,
+    head: [tableColumns.map(col => col.header)],
+    body: tableRows.map(row => [
+      row.name,
+      row.sku,
+      row.quantity,
+      row.price,
+      row.total
+    ]),
+    theme: 'grid',
+    styles: {
+      fontSize: 9,
+      cellPadding: 5
+    },
+    headStyles: {
+      fillColor: [76, 175, 80],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    }
+  });
+
+  // Tổng cộng
+  const finalY = doc.previousAutoTable.finalY + 10;
+
+  doc.setFontSize(10);
+  doc.text('Phí vận chuyển: Miễn phí', 130, finalY);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Tổng cộng: ${formatPrice(orderDetails?.total || 0)}`, 130, finalY + 10);
+
+  // Lưu file
+  doc.save(`don-hang-${new Date().getTime()}.pdf`);
+};
 const parsePrice = (price) => {
-  return Number(price.replace(/\./g, '').replace('đ', '').trim());
+  if (!price || typeof price !== 'string') return 0;
+  if (price.includes('NaN')) return 0;
+  const numericValue = price.replace(/[^\d]/g, '');
+  return numericValue ? parseInt(numericValue, 10) : 0;
 };
 
-// Hàm để định dạng số thành chuỗi giá có dấu phân cách và ký tự "đ"
+// định dạng giá thành số vnd 
 const formatPrice = (price) => {
-  return price.toLocaleString('vi-VN') + 'đ';
+  const numPrice = Number(price);
+  if (isNaN(numPrice)) {
+    return '0 ₫';
+  }
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(numPrice);
 };
-
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
-  const numericPrice = parsePrice(item.price); // Chuyển giá về dạng số
+  const numericPrice = parsePrice(item.price);
+  
 
   return (
     <div className="flex items-center gap-4 p-3 bg-white rounded-lg hover:bg-gray-50 transition-colors">
       <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
-        <img 
-          src={item.image || "/api/placeholder/64/64"} 
-          alt={item.name} 
+        <img
+          src={item.image || "/api/placeholder/64/64"}
+          alt={item.name}
           className="w-full h-full object-cover"
         />
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
         <p className="text-sm text-gray-500 truncate">{item.description}</p>
       </div>
-      
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={() => onUpdateQuantity(item.id, Math.max(0, item.quantity - 1))}
-        >
-          <Minus className="w-4 h-4" />
-        </Button>
-        
-        <span className="w-8 text-center font-medium">{item.quantity}</span>
-        
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
-      </div>
-      
+
+      <QuantityInput 
+          item={item} 
+          onUpdateQuantity={onUpdateQuantity}
+        />
+
+
       <div className="text-right min-w-[100px]">
         <div className="font-medium text-purple-600">
-          {formatPrice(numericPrice * item.quantity)} {/* Tính giá tổng */}
+          {formatPrice(numericPrice * item.quantity)}
         </div>
         <div className="text-sm text-gray-500">
-          {formatPrice(numericPrice)}/sp {/* Giá từng sản phẩm */}
+          {formatPrice(numericPrice)}/sp
         </div>
       </div>
-      
-      <Button 
-        variant="ghost" 
+
+      <Button
+        variant="ghost"
         size="icon"
         className="text-gray-400 hover:text-red-500 hover:bg-red-50"
         onClick={() => onRemove(item.id)}
@@ -77,36 +168,413 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   );
 };
 
-const CartSummary = ({ cartTotal, shipping = 0 }) => (
-  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-    <div className="flex justify-between text-sm">
-      <span className="text-gray-600">Tổng tiền hàng</span>
-      <span className="font-medium">{formatPrice(cartTotal)}</span>
-    </div>
-    <div className="flex justify-between text-sm">
-      <span className="text-gray-600">Phí vận chuyển</span>
-      <span className="font-medium">{formatPrice(shipping)}</span>
-    </div>
-    <div className="pt-2 border-t">
-      <div className="flex justify-between text-lg font-bold">
-        <span className="text-purple-600">Tổng cộng</span>
-        <span className="text-purple-600">{formatPrice(cartTotal + shipping)}</span>
+// hàm tính tổng 
+const CartSummary = ({ cartTotal }) => {
+  //Phí ship là 0 VNĐ, sẽ hiển thị là "FREE"
+
+  return (
+    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-600">Tổng tiền hàng</span>
+        <span className="font-medium">{formatPrice(cartTotal)}</span>
+      </div>
+
+      {/* Hiển thị phí ship là "FREE" với kiểu chữ nổi bật */}
+      <div className="flex justify-between text-sm pt-2 items-center">
+        <span className="text-gray-600">Phí ship</span>
+        <span className="font-medium text-purple-500  font-bold tracking-wide bg-purple-100 px-3 py-1 rounded-full shadow-sm">
+          Miễn phí
+        </span>
+      </div>
+      <div className="pt-2 border-t">
+        <div className="flex justify-between text-lg font-bold">
+          <span className="text-purple-600">Tổng cộng</span>
+          {/* Tính tổng tiền bao gồm phí ship */}
+          <span className="text-purple-600">{formatPrice(cartTotal)}</span>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-const CartAndCheckout = ({ cart = [], setCart, isAuthenticated }) => {
+// xác nhận đơn hàng thành công của đại lý 
+const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Hàm format giá tiền
+  const formatPrice = (price) => {
+    const numPrice = Number(price);
+    if (isNaN(numPrice)) {
+      return '0 ₫';
+    }
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(numPrice);
+  };
+
+  const handleViewDetails = () => {
+    setShowDetails(true);
+  };
+  // form xem chi tiết đơn hàng 
+  const OrderDetailsView = () => {
+    return (
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-1/2 top-1 -translate-x-1/2  z-50  mx-auto px-6 max-h-96"
+
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden"
+            >
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 p-6">
+                <div className="flex justify-between items-center text-white">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Chi Tiết Đơn Hàng</h2>
+                    <p className="text-purple-50">#{orderDetails?.orderId || 'ORD123456789'}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                      <p className="text-sm text-purple-50">Tổng giá trị</p>
+                      <p className="text-xl font-bold">{formatPrice(orderDetails?.total || 5000000)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+                {/* Order Status Timeline */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                    Trạng thái đơn hàng
+                  </h3>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white mb-2">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <p className="font-medium">Đã xác nhận</p>
+                      <p className="text-gray-500">10:30 AM</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white mb-2">
+                        <Package2 className="w-4 h-4" />
+                      </div>
+                      <p className="font-medium">Đang xử lý</p>
+                      <p className="text-gray-500">11:00 AM</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <div className="flex flex-col items-center opacity-40">
+                      <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white mb-2">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <p className="font-medium">Hoàn thành</p>
+                      <p className="text-gray-500">--:--</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Info Grid */}
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  {/* Basic Info */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Thông tin cơ bản</h3>
+                    <div className="bg-white rounded-xl border p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Ngày đặt hàng</p>
+                          <p className="font-medium">{new Date().toLocaleDateString('vi-VN')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Store className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Đại lý</p>
+                          <p className="font-medium">Công ty TNHH ABC</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Phương thức thanh toán</p>
+                          <p className="font-medium">Chuyển khoản ngân hàng</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shipping Info */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Thông tin giao hàng</h3>
+                    <div className="bg-white rounded-xl border p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 text-gray-500 mt-1" />
+                        <div>
+                          <p className="text-sm text-gray-500">Địa chỉ giao hàng</p>
+                          <p className="font-medium">123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Package2 className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Phương thức vận chuyển</p>
+                          <p className="font-medium">Giao hàng nhanh</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Chi tiết sản phẩm</h3>
+                  <div className="bg-white rounded-xl border overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Sản phẩm</th>
+                          <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">Số lượng</th>
+                          <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Đơn giá</th>
+                          <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {orderDetails?.items?.map((item, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">{item.quantity}</td>
+                            <td className="px-4 py-3 text-right">{(item.price)}</td>
+                            <td className="px-4 py-3 text-right">{formatPrice(parsePrice(item.price) * item.quantity)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-gray-50">
+                        <tr>
+                          <td colSpan="3" className="px-4 py-3 text-right font-medium">Phí vận chuyển:</td>
+                          <td className="px-4 py-3 text-right font-medium">
+                            <span className="text-purple-500 font-bold tracking-wide bg-purple-100 px-3 py-1 rounded-full shadow-sm">
+                              Miễn phí
+                            </span>
+                          </td>
+                        </tr>
+                        <tr className="border-t">
+                          <td colSpan="3" className="px-4 py-3 text-right font-medium">Tổng cộng:</td>
+                          <td className="px-4 py-3 text-right font-bold text-purple-600">{formatPrice(orderDetails?.total || 0)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 bg-gray-50 border-t">
+                <div className="flex gap-4 justify-end">
+                  <button
+                    onClick={() => setShowDetails(false)}
+                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    onClick={() => exportOrderToPDF(orderDetails)}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                    Xuất PDF
+                  </button>
+                </div>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  return (
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-1/2 top-24 -translate-x-1/2 z-50 w-full max-w-lg mx-auto px-4"
+            onClick={onClose}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="relative w-full max-w-lg mx-auto px-4 pt-8 pb-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
+                {/* Background Elements */}
+                {/* <div className="absolute inset-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-white" />
+                  <div className="absolute -right-20 -top-20 w-60 h-60 bg-green-100/50 rounded-full" />
+                  <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-emerald-50/50 rounded-full" />
+                </div> */}
+
+                {/* Content */}
+                <div className="relative z-10 p-6">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-purple-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-12 h-12 text-purple-500" />
+                  </div>
+
+                  <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      Xác nhận đơn hàng thành công!
+                    </h2>
+                    <p className="text-gray-600">
+                      Cảm ơn Đại lý đã đặt hàng. Đơn hàng đã được xác nhận và đang được xử lý.
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-xl p-4 mb-8 border border-purple-100">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Mã đơn hàng:</span>
+                        <span className="font-medium text-purple-600">
+                          {orderDetails?.orderId || '#' + Math.random().toString(36).substr(2, 9)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Tổng giá trị:</span>
+                        <span className="font-medium text-purple-600">
+                          {formatPrice(orderDetails?.total || 0)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Thời gian:</span>
+                        <span className="font-medium">
+                          {new Date().toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                      onClick={onClose}
+                    >
+                      Đóng
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-purple-600 text-purple-600 hover:bg-purple-50 font-medium"
+                      onClick={handleViewDetails}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                </div>
+
+                {/* <div className="relative z-10 p-6">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-12 h-12 text-green-500" />
+                  </div>
+
+                  <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      Xác nhận đơn hàng thành công!
+                    </h2>
+                    <p className="text-gray-600">
+                      Cảm ơn Đại lý đã đặt hàng. Đơn hàng đã được xác nhận và đang được xử lý.
+                    </p>
+                  </div>
+
+                  <div className="bg-green-50 rounded-xl p-4 mb-8 border border-green-100">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Mã đơn hàng:</span>
+                        <span className="font-medium text-green-600">
+                          {orderDetails?.orderId || '#' + Math.random().toString(36).substr(2, 9)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Tổng giá trị:</span>
+                        <span className="font-medium text-green-600">
+                          {formatPrice(orderDetails?.total || 0)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Thời gian:</span>
+                        <span className="font-medium">
+                          {new Date().toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                      onClick={onClose}
+                    >
+                      Đóng
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex-1 border-green-600 text-green-600 hover:bg-green-50 font-medium"
+                      onClick={handleViewDetails}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                </div> */}
+
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Render component chi tiết đơn hàng */}
+      <OrderDetailsView />
+    </>
+  );
+};
+
+//thẻ thanh toán chính 
+const CartAndCheckout = ({ cart = [], setCart }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
 
-  // Tính tổng tiền trong giỏ hàng
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
+
   const cartTotal = cart.reduce((total, item) => total + (parsePrice(item.price) * item.quantity), 0);
   const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
 
   const handleUpdateQuantity = (itemId, newQuantity) => {
-    const updatedCart = cart.map(item => 
-      item.id === itemId 
+    const updatedCart = cart.map(item =>
+      item.id === itemId
         ? { ...item, quantity: newQuantity }
         : item
     ).filter(item => item.quantity > 0);
@@ -118,13 +586,81 @@ const CartAndCheckout = ({ cart = [], setCart, isAuthenticated }) => {
     setCart(updatedCart);
   };
 
-  const handleCheckoutClick = () => {
+  const createOrder = async () => {
+    try {
+      // Lấy managerId từ localStorage (giả sử đã được lưu khi đăng nhập)
+      //const managerId = localStorage.getItem('managerId') || "default-manager-id";
+
+      const managerId = null; // Đặt managerId là null
+      const agencyId = localStorage.getItem('agencyId');
+
+      // Chuẩn bị dữ liệu đơn hàng theo format yêu cầu
+      const orderData = {
+        agencyId: agencyId, // Có thể lấy từ thông tin user đã đăng nhập
+        note: "Đơn hàng mới",
+        managerId: managerId,
+        items: cart.map(item => ({
+          productId: item.id.toString(),
+          quantity: item.quantity
+        }))
+      };
+
+      // Gọi API tạo đơn hàng
+      const response = await fetch('http://localhost:5018/api/Order/Create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Thêm token nếu cần
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  };
+
+
+  const handleCheckoutClick = async () => {
     if (!isAuthenticated) {
       localStorage.setItem('pendingCart', JSON.stringify(cart));
       navigate('/login?redirect=checkout');
       return;
     }
-    // Xử lý checkout
+
+    try {
+      // Tạo đơn hàng trên server
+      const orderResult = await createOrder();
+
+      // Cập nhật orderDetails với thông tin từ server
+      setOrderDetails({
+        orderId: orderResult.id || 'DH' + Date.now(),
+        total: cartTotal,
+        items: cart
+      });
+
+      // Đóng giỏ hàng và hiển thị xác nhận
+      setIsCartOpen(false);
+      setShowOrderConfirmation(true);
+    } catch (error) {
+      // Xử lý lỗi - có thể hiển thị thông báo lỗi cho người dùng
+      console.error('Failed to create order:', error);
+      alert('Không thể tạo đơn hàng. Vui lòng thử lại sau.');
+    }
+  };// đã thay 
+
+  //Ẩn thông báo xác nhận đơn hàng khi người dùng muốn đóng nó.
+  //Xóa giỏ hàng để chuẩn bị cho lần mua sắm tiếp theo sau khi đã hoàn tất đơn hàng.
+  const handleOrderConfirmationClose = () => {
+    setShowOrderConfirmation(false);
+    setCart([]); // Xóa giỏ hàng sau khi đặt hàng thành công
   };
 
   const CartDrawer = () => (
@@ -153,8 +689,8 @@ const CartAndCheckout = ({ cart = [], setCart, isAuthenticated }) => {
                     {itemCount} {itemCount === 1 ? 'sản phẩm' : 'sản phẩm'}
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   onClick={() => setIsCartOpen(false)}
                 >
@@ -190,11 +726,14 @@ const CartAndCheckout = ({ cart = [], setCart, isAuthenticated }) => {
               {cart.length > 0 && (
                 <div className="border-t p-4 space-y-4 bg-white">
                   <CartSummary cartTotal={cartTotal} />
-                  <Button 
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white h-11"
+                  <Button
+                    className={`w-full h-11 ${isAuthenticated
+                      ? 'bg-purple-600 hover:bg-purple-800'
+                      : 'bg-gray-600 hover:bg-gray-700'
+                      } text-white`}
                     onClick={handleCheckoutClick}
                   >
-                    Xác nhận đơn hàng
+                    {isAuthenticated ? 'Xác nhận đơn hàng' : 'Đăng nhập để xác nhận đơn hàng'}
                   </Button>
                 </div>
               )}
@@ -215,16 +754,22 @@ const CartAndCheckout = ({ cart = [], setCart, isAuthenticated }) => {
       >
         <ShoppingCart className="w-6 h-6" />
         {cart.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-purple-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-            {cart.length}
+          <span className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+            {cart.reduce((total, item) => total + item.quantity, 0)}
           </span>
         )}
       </Button>
 
       <CartDrawer />
+
+      <OrderConfirmationModal
+        isOpen={showOrderConfirmation}
+        onClose={handleOrderConfirmationClose}
+        orderDetails={orderDetails}
+
+      />
     </>
   );
 };
 
 export default CartAndCheckout;
-

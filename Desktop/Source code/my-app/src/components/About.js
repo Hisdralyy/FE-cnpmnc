@@ -79,22 +79,23 @@ export default function About() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <Badge className="bg-purple-100 text-purple-600 mb-4">Về chúng tôi</Badge>
-            <div className="container mx-auto flex items-center justify-between -mt-2">
+                        <div className="container mx-auto flex items-center justify-between -mt-2">
   <motion.div 
-    className="text-xl font-bold text-purple-800"
+    className="text-xl font-bold text-purple-800 italic"
     whileHover={{ scale: 1.1 }}
   >
-    <Link to="/">WareHouse Smart</Link>
+    <Link to="/">OceanVie</Link>
   </motion.div>
   </div>
+            <Badge className="bg-purple-100 text-purple-600 mb-4">Về chúng tôi</Badge>
+
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
               Định hình tương lai
               <span className="text-purple-900"> quản lý kho</span>
             </h1>
             
             <p className="max-w-2xl mx-auto text-xl text-gray-500">
-              Với hơn 10 năm kinh nghiệm, chúng tôi tự hào là đơn vị tiên phong trong lĩnh vực 
+              Với hơn 3 năm kinh nghiệm, chúng tôi tự hào là đơn vị tiên phong trong lĩnh vực 
               cung cấp giải pháp quản lý kho thông minh tại Việt Nam
             </p>
           </motion.div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Menu, X, ChevronDown, Star, Plus, Minus, Trash2 } from 'lucide-react';
+import { Search, Bell, Menu, X, ChevronDown, Star, Plus, Minus, Trash2,MessageCircle,ZoomIn,ShoppingCart,Heart   } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import CartAndCheckout from './CartAndCheckout'; // Import component mới
+import CartAndCheckout from './CartAndCheckout';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -10,9 +10,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Link } from 'react-router-dom';
+import axios from 'axios';  
+import {ProfileIcon} from './Profile' 
+import './Styles/nofication.css'; 
+
+// Import thêm components cho phân trang
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/Pagination";
 
 
+
+const categoryMap = {
+  1: 'Điện thoại',
+  2: 'Tables',
+  3: 'Laptops', 
+  4: 'Tủ lạnh',
+  5: 'Máy giặt',
+  6: 'Tivi',
+  7: 'Máy lạnh',
+  8: 'Loa',
+  1001: 'Gia dụng'
+};
 const ProductPage = () => {
+   // Pagination states
+   const [currentPage, setCurrentPage] = useState(1);
+   const [itemsPerPage] = useState(9);
+   const [totalPages, setTotalPages] = useState(1);
   // States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -24,87 +54,191 @@ const ProductPage = () => {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-
-  // State mới cho việc kiểm tra đăng nhập (giả định)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); 
+  const [categories, setCategories] = useState(['all']); // State mới để lưu danh sách categories
+  // State cho việc kiểm tra đăng nhập
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
 
   // Derived values
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const cartTotal = cart.reduce((total, item) => total + (parseFloat(item.price.replace(/[^0-9.-]+/g,"")) * item.quantity), 0);
 
-  // Initial products data
+   // Get current page items
+  const getCurrentPageItems = () => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  };
+  
+  // Fetch products from API
   useEffect(() => {
-    setProducts([
-      { id: 1, name: 'Iphone 16 Promax', price: "29.650.000đ", image:  'images/16promax.png', stock: 12, category: 'Điện thoại' },
-      { id: 2, name: 'Ultra-thin Tablet Y', price: "12.650.000đ", image:  'images/table.png', stock: 5, category: 'Máy tính bảng' },
-      { id: 3, name: 'Professional Laptop Z', price: "42.840.000₫", image: 'images/macbock.jpeg', stock: 8, category: 'laptops' },
-      { id: 4, name: 'Tủ lạnh Hitachi Inverter 406 lít', price: "5.190.000đ", image: 'images/tulanh.jpg', stock: 10, category: 'Tủ lạnh' },
-      { id: 5, name: 'Máy giặt Samsung 13 kg Inverter', price: "6.790.000đ", image: 'images/maygiat.jpg', stock: 5, category: 'Máy giặt' },
-      { id: 6, name: 'Smart Tivi LED LG 4K 43 inch', price: "16.890.000đ", image: 'images/tivi.jpg', stock: 8, category: 'Tivi' },
-      { id: 7, name: 'Máy lạnh Samsung Inverter 1.5 HP', price: "6.490.000đ", image: 'images/maylanh.jpg', stock: 10, category: 'Máy lạnh' },
-      { id: 8, name: 'Loa xách tay Marshall Stanmore 3', price: "11.040.000đ", image: 'images/loaxachtay.jpg', stock: 5, category: 'Loa' },
-      { id: 9, name: 'Nồi cơm điện tử Sunhouse 1 lít', price: "2.990.000đ", image: 'images/noicomdien.jpg', stock: 8, category: 'Gia dụng' },
-    ]);
+    const fetchProducts = async () => { 
+      try {
+        setLoading(true);
+        const response = await axios.get('http://localhost:5018/api/Product/get-all');
+        console.log('API Response:', response.data); // Log để kiểm tra dữ liệu
+        if (!response.data) {
+          throw new Error('No data received from API');
+        }
+        // Kiểm tra cấu trúc dữ liệu và đảm bảo response.data là một mảng
+        const productsData = Array.isArray(response.data) ? response.data : 
+                            Array.isArray(response.data.data) ? response.data.data : 
+                            Array.isArray(response.data.products) ? response.data.products : [];
+  
+        if (productsData.length === 0) {
+          throw new Error('No products found in the response');
+        }
+  
+        // Transform API data
+        const transformedProducts = productsData.map(item => ({
+          id: item.id,
+          name: item.name || 'Unnamed Product',
+          price: new Intl.NumberFormat('vi-VN', { 
+            style: 'currency', 
+            currency: 'VND' 
+          }).format(item.price || 0),
+          image: item.photo || '/images/placeholder.png',
+          stock: item.quantity || 0,
+          categoryId: item.categoryId, // Thêm categoryId
+          category:categoryMap[item.categoryId] || 'Uncategorized' // Map category name từ categoryId
+      
+        }));
+  
+        console.log('Transformed Products:', transformedProducts);
+  
+         // Lấy danh sách categories từ categoryMap
+      const uniqueCategories = ['Tất cả', ...new Set(Object.values(categoryMap))];
+      setCategories(uniqueCategories);
+      
+      setProducts(transformedProducts);
+      setFilteredProducts(transformedProducts);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+    fetchProducts();
   }, []);
-
-  // Filter products based on search and category
-  useEffect(() => {
-    setFilteredProducts(
-      products.filter(product =>
-        (selectedCategory === 'all' || product.category === selectedCategory) &&
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery, products, selectedCategory]);
-
+  
   // Cart functions
+  useEffect(() => {
+    let timeout;
+    if (showAlert) {
+      timeout = setTimeout(() => {
+        setShowAlert(false);
+      }, 2000);
+    }
+    return () => clearTimeout(timeout);
+  }, [showAlert]);
+
   const addToCart = (product) => {
+    // Hiển thị thông báo ngay khi click button
+    setAlertMessage('Sản phẩm đã được thêm vào giỏ hàng!');
+    setShowAlert(true);
+    
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
-        if (existingItem.quantity >= product.stock) {
-          setAlertMessage('Maximum stock limit reached!');
-          setShowAlert(true);
-          return prevCart;
-        }
         return prevCart.map(item =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      setAlertMessage('Product added to cart!');
-      setShowAlert(true);
       return [...prevCart, { ...product, quantity: 1 }];
     });
   };
+ // Pagination component
+ const PaginationControls = () => {
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pages.push(i);
+  }
 
-  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
+  return (
+    <Pagination className="my-8">
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+          />
+        </PaginationItem>
+
+        {pages.map((page) => {
+          if (
+            page === 1 ||
+            page === totalPages ||
+            (page >= currentPage - 1 && page <= currentPage + 1)
+          ) {
+            return (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => handlePageChange(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          } else if (
+            page === currentPage - 2 ||
+            page === currentPage + 2
+          ) {
+            return (
+              <PaginationItem key={page}>
+                <PaginationEllipsis />
+              </PaginationItem>
+            );
+          }
+          return null;
+        })}
+
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+};
   // Header Component
   const Header = () => (
     <motion.header 
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
+      // initial={{ y: -100 }} 
+      // animate={{ y: 0 }}
       className="bg-white shadow-lg p-4 sticky top-0 z-50"
     >
       <div className="container mx-auto flex items-center justify-between">
         <motion.div 
-          className="text-xl font-bold text-purple-800"
+          className="text-xl font-bold text-purple-800 italic "
           whileHover={{ scale: 1.1 }}
         >
-        <Link to="/">WareHouse Smart</Link>
+        <Link to="/">OceanVie </Link>
         </motion.div>
         <div className="hidden md:flex flex-grow mx-8">
           <Input
             type="text"
-            placeholder="Search for premium products..."
+            placeholder="Tìm kiếm sản phẩm cao cấp..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-purple-50 border-purple-200 focus:border-purple-500"
           />
         </div>
         <div className="flex items-center space-x-4">
+        
           {/* Thay thế nút giỏ hàng cũ bằng CartAndCheckout component */}
           <CartAndCheckout 
             cart={cart}
@@ -112,156 +246,357 @@ const ProductPage = () => {
             cartTotal={cartTotal}
             isAuthenticated={isAuthenticated}
           />
-          <motion.button
+          <ProfileIcon/> 
+          {/* <motion.button // Thông báo 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="p-2 rounded-full bg-purple-100 text-purple-600"
           >
             <Bell className="h-6 w-6" />
           </motion.button>
-          <motion.button
+          <motion.button //3 gạch
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="p-2 rounded-full bg-purple-100 text-purple-600 md:hidden"
             onClick={() => setSidebarOpen(true)}
-          >
+          > 
             <Menu className="h-6 w-6" />
-          </motion.button>
+          </motion.button> */}
         </div>
       </div>
     </motion.header>
   );
 
   // Sidebar Component
-  const Sidebar = () => (
+   const Sidebar = () => (
     <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)}>
       <div className="p-4 bg-white h-full w-64">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-purple-800">Sản phẩm</h2>
-          <Button variant="ghost" onClick={() => setSidebarOpen(false)}>
+          {/* <Button variant="ghost" onClick={() => setSidebarOpen(false)}>
             <X className="h-6 w-6 text-purple-800" />
-          </Button>
+          </Button> */}
         </div>
         <div className="space-y-2">
-          {['all', 'Điện thoại', 'Máy tính bảng', 'laptops', 'Tủ lạnh', 'Máy giặt', 'Tivi', 'Máy lạnh', 'Loa', 'Gia dụng'].map((category) => (
-            <motion.button
-              key={category}
-              whileHover={{ scale: 1.05, backgroundColor: '#F3E8FF' }}
-              whileTap={{ scale: 0.95 }}
-              className={`w-full p-3 text-left rounded-lg ${
-                selectedCategory === category ? 'bg-purple-200 text-purple-800' : 'text-gray-600'
-              }`}
-              onClick={() => {
-                setSelectedCategory(category);
-                setSidebarOpen(false);
-              }}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </motion.button>
-          ))}
-        </div>
+        {categories.map((category) => (
+          <motion.button
+            key={category}
+            whileHover={{ scale: 1.05, backgroundColor: '#F3E8FF' }}
+            whileTap={{ scale: 0.95 }}
+            className={`w-full p-3 text-left rounded-lg ${
+              selectedCategory === category ? 'bg-purple-200 text-purple-800' : 'text-gray-600'
+            }`}
+            onClick={() => {
+              setSelectedCategory(category);
+              setSidebarOpen(false);
+            }}
+          >
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </motion.button>
+        ))}
       </div>
-    </Drawer>
+    </div>
+  </Drawer>
+);
+//Filter sản phẩm dựa trên categoryId
+useEffect(() => {
+  const filteredByCategory = selectedCategory === 'all' 
+    ? products 
+    : products.filter(product => categoryMap[product.categoryId] === selectedCategory);
+    
+  const filteredBySearch = filteredByCategory.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   
+  setFilteredProducts(filteredBySearch);
+  setTotalPages(Math.ceil(filteredBySearch.length / itemsPerPage));
+  setCurrentPage(1); 
+}, [selectedCategory, searchQuery, products,itemsPerPage]);
 
-  // Product Grid Component
-  const ProductGrid = () => (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6"
-    >
-      {filteredProducts.map(product => (
-        <motion.div
-          key={product.id}
-          whileHover={{ y: -5 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Card className="overflow-hidden">
-            <CardHeader className="p-0">
-              <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
-            </CardHeader>
-            <CardContent className="p-4">
-              <CardTitle className="text-lg font-semibold text-purple-800">{product.name}</CardTitle>
-              <p className="text-2xl font-bold mt-2 text-purple-600">{product.price}</p>
-              <p className="text-sm text-gray-500 mt-1">Trong kho: {product.stock}</p>
-              <div className="flex items-center mt-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current text-yellow-400" />
-                ))}
-                <span className="ml-2 text-sm text-gray-600">(4.5)</span>
-              </div>
-              <div className="flex space-x-2 mt-4">
-                <Button 
-                  className="flex-grow bg-purple-900 hover:bg-purple-700 text-white"
-                  onClick={() => addToCart(product)}
-                >
-                  Thêm vào đơn hàng
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setQuickViewProduct(product)}
-                >
-                  Xem nhanh
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </motion.div>
+ // Product Grid Component with loading and error handling
+ const ProductGrid = () => {
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <Alert variant="destructive">
+          <AlertTitle>Error Loading Products</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (filteredProducts.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Alert>
+          <AlertTitle>No Products Found</AlertTitle>
+          <AlertDescription>
+            Try adjusting your search or filter criteria
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  const currentPageItems = getCurrentPageItems();
+  return (
+    <>
+      <motion.div 
+        // initial={{ opacity: 0 }}
+        // animate={{ opacity: 1 }}
+        // transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6"
+      >
+        {currentPageItems.map(product => (
+          <motion.div
+            key={product.id}
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Card className="overflow-hidden">
+              <CardHeader className="p-0">
+                <img 
+                  src={product.image} 
+                  alt={product.name} 
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/images/placeholder.png';
+                  }}
+                />
+              </CardHeader>
+              <CardContent className="p-4">
+                <CardTitle className="text-lg font-semibold text-purple-800">{product.name}</CardTitle>
+                <p className="text-2xl font-bold mt-2 text-purple-600">{product.price}</p>
+                <div className="flex items-center mt-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-current text-yellow-400" />
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">(4.5)</span>
+                </div>
+                <div className="flex space-x-2 mt-4">
+                  <Button 
+                    className="flex-grow bg-purple-900 hover:bg-purple-700 text-white"
+                    onClick={() => addToCart(product)}
+                  >
+                    Thêm vào đơn hàng
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setQuickViewProduct(product)}
+                  >
+                    Xem nhanh
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
+      <PaginationControls />
+    </>
   );
+};
+
 
   // Quick View Component
-  const QuickView = ({ product, onClose }) => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
+  const QuickView = ({ product, onClose }) => {
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isZoomed, setIsZoomed] = useState(false);
+  
+    // Giả sử mỗi sản phẩm có nhiều hình ảnh
+    const productImages = [
+      product.image,
+      // Thêm các hình ảnh khác của sản phẩm
+      product.image,// product.image2,
+      product.image,// product.image3,
+    ].filter(Boolean); // Lọc bỏ undefined/null
+  
+    const handleImageClick = (image) => {
+      setSelectedImage(image);
+      setIsZoomed(true);
+    };
+  
+    const handleZaloSupport = () => {
+      window.open('https://zalo.me/0925360299', '_blank');
+    };
+  
+    return (
       <motion.div
-        className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto"
+        onClick={onClose}
       >
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold text-purple-800">{product.name}</h2>
-          <Button variant="ghost" onClick={onClose}>
-            <X className="h-6 w-6" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <img src={product.image} alt={product.name} className="w-full h-64 object-cover rounded-lg" />
-          <div>
-            <p className="text-3xl font-bold text-purple-600 mb-4">${product.price}</p>
-            <p className="text-gray-600 mb-4">
-              {product.description || "Trải nghiệm chất lượng cao cấp và hiệu suất vượt trội với sản phẩm này. Hoàn hảo cho những ai yêu cầu công nghệ và thiết kế tốt nhất."}
-            </p>
-            <p className="text-sm text-gray-500 mb-4">Trong kho: {product.stock}</p>
-            <div className="flex items-center mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-current text-yellow-400" />
-              ))}
-              <span className="ml-2 text-sm text-gray-600">(4.5)</span>
+        <motion.div
+          className="bg-white rounded-xl max-w-4xl w-full mx-auto my-8"
+          onClick={(e) => e.stopPropagation()}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+        >
+          {/* Header */}
+          <div className="border-b p-4 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-purple-800">{product.name}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                  {product.category}
+                </Badge>
+                <span className="text-sm text-gray-500">Id: {product.id}</span>
+              </div>
             </div>
-            <Button 
-              className="w-full bg-purple-900 hover:bg-purple-700 text-white"
-              onClick={() => {
-                addToCart(product);
-                onClose();
-              }}
-            >
-              Thêm vào đơn hàng
+            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-purple-100">
+              <X className="h-5 w-5" />
             </Button>
           </div>
-        </div>
+  
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Image Section */}
+            <div className="space-y-4">
+              <div className="relative group">
+                <img 
+                  src={selectedImage || product.image} 
+                  alt={product.name} 
+                  className="w-full h-96 object-cover rounded-lg cursor-zoom-in"
+                  onClick={() => handleImageClick(selectedImage || product.image)}
+                />
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="icon" variant="secondary" className="bg-white/80 hover:bg-white">
+                    <ZoomIn className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Thumbnail Gallery */}
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {productImages.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`${product.name} view ${index + 1}`}
+                    className={`h-20 w-20 object-cover rounded cursor-pointer hover:ring-2 hover:ring-purple-500
+                      ${selectedImage === img ? 'ring-2 ring-purple-500' : ''}`}
+                    onClick={() => setSelectedImage(img)}
+                  />
+                ))}
+              </div>
+            </div>
+  
+            {/* Content Section */}
+            <div className="space-y-6">
+              {/* Price and Stock */}
+              <div className="flex justify-between items-center">
+                <p className="text-3xl font-bold text-purple-600">${product.price}</p>
+                <Badge variant={product.stock > 0 ? "success" : "destructive"}>
+                  {product.stock > 0 ? 'Còn hàng' : 'Còn hàng'}
+                </Badge>
+              </div>
+  
+              {/* Description */}
+              <div className="prose prose-sm">
+                <h3 className="text-lg font-semibold mb-2">Mô tả sản phẩm</h3>
+                <p className="text-gray-600">
+                  {product.description || 
+                  "Khám phá đỉnh cao của công nghệ. Một thiết bị điện tử được thiết kế để nâng tầm cuộc sống của bạn. Sở hữu hiệu suất vượt trội, thiết kế tinh tế và công nghệ tiên tiến, sản phẩm này đáp ứng hoàn hảo mọi nhu cầu từ công việc, giải trí đến kết nối hàng ngày. Với khả năng vận hành bền bỉ, giao diện dễ sử dụng, và các tính năng thông minh, không chỉ là một thiết bị mà còn là người bạn đồng hành lý tưởng. Hãy trang bị cho mình công nghệ hiện đại để tận hưởng cuộc sống tiện nghi hơn bao giờ hết!"}
+                </p>
+              </div>
+  
+              {/* Ratings */}
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className={`h-5 w-5 ${i < Math.floor(product.rating || 4.5) 
+                          ? 'fill-yellow-400 text-yellow-400' 
+                          : 'text-gray-300'}`}
+                      />
+                    ))}
+                    <span className="ml-2 text-sm font-medium">
+                      {product.rating || 4.5} / 5.0
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    ({product.reviewCount || 2800} đánh giá)
+                  </span>
+                </div>
+              </div>
+  
+              {/* Actions */}
+              <div className="space-y-3">
+                <Button 
+                  className="w-full bg-purple-900 hover:bg-purple-700 text-white h-12"
+                  onClick={() => {
+                    addToCart(product);
+                    onClose();
+                  }}
+                >
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Thêm vào đơn hàng
+                </Button>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="hover:bg-purple-50"
+                    onClick={handleZaloSupport}
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Đánh giá sản phẩm
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="hover:bg-purple-50"
+                    onClick={handleZaloSupport}
+                  >
+                    <Heart className="mr-2 h-5 w-5" />
+                   Cần hỗ trợ 
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+  
+        {/* Image Zoom Modal */}
+        <AnimatePresence>
+          {isZoomed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+              onClick={() => setIsZoomed(false)}
+            >
+              <motion.img
+                src={selectedImage || product.image}
+                alt={product.name}
+                className="max-w-[90vw] max-h-[90vh] object-contain"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+              />
+              <Button 
+                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20"
+                onClick={() => setIsZoomed(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
-    </motion.div>
-  );
+    );
+  };
 
   // Footer Component
   const Footer = () => (
@@ -321,8 +656,8 @@ const ProductPage = () => {
             <h1 className="text-2xl font-bold text-purple-900 mb-6 italic">Sản phẩm cao cấp của chúng tôi</h1>
             <Tabs defaultValue="grid" className="mb-6">
               <TabsList>
-                <TabsTrigger value="grid">Grid View</TabsTrigger>
-                <TabsTrigger value="list">List View</TabsTrigger>
+                <TabsTrigger value="grid">Xem lưới</TabsTrigger>
+                <TabsTrigger value="list">Xem danh sách </TabsTrigger>
               </TabsList>
               <TabsContent value="grid">
                 <ProductGrid />
@@ -339,8 +674,8 @@ const ProductPage = () => {
                       <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded" />
                       <div className="flex-grow">
                         <h3 className="text-lg font-semibold text-purple-800">{product.name}</h3>
-                        <p className="text-xl font-bold text-purple-600">${product.price}</p>
-                        <p className="text-sm text-gray-500">Trong kho: {product.stock}</p>
+                        <p className="text-xl font-bold text-purple-600">{product.price}</p>
+                        {/* <p className="text-sm text-gray-500">Trong kho: {product.stock}</p> */}
                       </div>
                       <div className="flex flex-col space-y-2">
                         <Button 
@@ -372,8 +707,10 @@ const ProductPage = () => {
         )}
       </AnimatePresence>
       {showAlert && (
-        <Alert className="fixed bottom-4 right-4 w-auto">
-          <AlertTitle>Notification</AlertTitle>
+        <Alert className="fixed bottom-4 right-4 w-auto bg-purple-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
+          key={Date.now()}
+          >
+          <AlertTitle>Thông báo </AlertTitle>
           <AlertDescription>{alertMessage}</AlertDescription>
         </Alert>
       )}

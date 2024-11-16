@@ -52,12 +52,16 @@ export default function solution() {
         <div className="max-w-7xl mx-auto pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto flex items-center justify-between -mt-4">
   <motion.div 
-    className="text-xl font-bold text-purple-800"
+    className="text-xl font-bold text-purple-800 italic"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8 }}
     whileHover={{ scale: 1.1 }}
   >
-    <Link to="/">WareHouse Smart</Link>
+    <Link to="/">OceanVie</Link>
   </motion.div>
 </div>
+
 
           <div className="text-center">
             <motion.h1 
@@ -81,7 +85,7 @@ export default function solution() {
               transition={{ delay: 0.4 }}
             >
               <Button size="lg" className="bg-purple-900 hover:bg-purple-700 text-white px-8 py-6 rounded-full text-lg">
-              <Link to="/login">Dùng thử miễn phí</Link>
+              <Link to="https://zalo.me/0925360299">Liên hệ ngay </Link>
               </Button>
             </motion.div>
           </div>
