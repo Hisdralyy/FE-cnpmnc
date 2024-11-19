@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { CalendarIcon, PackageIcon, CreditCardIcon, Loader2,Search} from 'lucide-react';
+import { CalendarIcon, PackageIcon, CreditCardIcon, TruckIcon, MapPinIcon,Loader2,Search} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 // Hàm chuyển đổi trạng thái đơn hàng
 const getOrderStatus = (status) => {
   switch (status) {
@@ -21,6 +21,14 @@ const getOrderStatus = (status) => {
     default:
       return { label: 'Không xác định', color: 'bg-gray-500' };
   }
+  // const statusStyles = {
+  //   'pending': 'bg-yellow-500',
+  //   'processing': 'bg-blue-500',
+  //   'completed': 'bg-green-500',
+  //   'cancelled': 'bg-red-500',
+  //   'default': 'bg-gray-500'
+  // };
+  // return statusStyles[status.toLowerCase()] || statusStyles.default;
 };
 
 // Hàm format tiền tệ
@@ -56,6 +64,7 @@ const OrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -92,6 +101,7 @@ const OrderHistory = () => {
   const handleBackToProducts = () => {
     navigate('/product');
   };
+  
 
   if (loading) {
     return (
@@ -122,70 +132,123 @@ const OrderHistory = () => {
       </div>
     );
   }
-
+// Group orders by year
+const ordersByYear = orders.reduce((acc, order) => {
+  const year = new Date(order.createdOn).getFullYear();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(order);
+  return acc;
+}, {});
   return (
-    <div className="container mx-auto p-4">
-    <div className="flex justify-between items-center mb-6">
-      <h1 className="text-2xl font-bold">Lịch sử đơn hàng</h1>
-      <Button variant="primary" onClick={handleBackToProducts}>
-        Trở về trang sản phẩm
-      </Button>
-    </div>
-      
-      <div className="space-y-4">
-        {orders.map((order) => (
-          <Card key={order.id} className="w-full">
-            <CardHeader className="flex flex-row justify-between items-center">
-              <CardTitle className="text-lg">
-                Đơn hàng #{order.invoiceId}
-              </CardTitle>
-              <Badge className={`${getOrderStatus(order.status).color} text-white`}>
-                {getOrderStatus(order.status).label}
-              </Badge>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span className="text-sm text-gray-600">Ngày đặt: {formatDate(order.createdOn)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <PackageIcon className="h-4 w-4" />
-                    <span className="text-sm text-gray-600">Đại lý: {order.agencyName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CreditCardIcon className="h-4 w-4" />
-                    <span className="text-sm font-semibold">Tổng tiền: {formatCurrency(order.amount)}</span>
-                  </div>
-                </div>
-                
-                <div className="border-t md:border-l md:border-t-0 md:pl-4 pt-4 md:pt-0">
-                  <h3 className="font-semibold mb-2">Chi tiết sản phẩm</h3>
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex gap-4 mb-2">
-                      <img 
-                        src={item.photo || "/api/placeholder/100/100"}
-                        alt={item.productName}
-                        className="w-20 h-20 object-cover rounded"
-                      />
-                      <div>
-                        <p className="font-medium">{item.productName}</p>
-                        <p className="text-sm text-gray-600">
-                          Số lượng: {item.quantity} x {formatCurrency(item.unitPrice)}
-                        </p>
-                        <p className="text-sm font-semibold">
-                          Thành tiền: {formatCurrency(item.unitPrice * item.quantity)}
-                        </p>
+    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50">
+      <div className="container mx-auto p-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-900">
+              Lịch sử đơn hàng
+            </h1>
+            <p className="text-gray-600 mt-2">Xem lại các đơn hàng của bạn</p>
+          </div>
+          <Button 
+            onClick={handleBackToProducts}
+            className="mt-4 md:mt-0 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-full px-6 py-2 shadow-sm transition-all duration-300"
+          >
+            Trở về trang sản phẩm
+          </Button>
+        </div>
+
+        <Tabs defaultValue={String(new Date().getFullYear())} className="w-full">
+          <TabsList className="mb-6 bg-white p-1 rounded-lg shadow-sm">
+            {Object.keys(ordersByYear).map((year) => (
+              <TabsTrigger
+                key={year}
+                value={year}
+                className="px-6 py-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700"
+              >
+                {year}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {Object.entries(ordersByYear).map(([year, yearOrders]) => (
+            <TabsContent key={year} value={year} className="space-y-6">
+              {yearOrders.map((order) => (
+                <Card 
+                  key={order.id}
+                  className="w-full hover:shadow-lg transition-shadow duration-300 bg-white border-0 shadow-sm overflow-hidden"
+                >
+                  <CardHeader className="flex flex-row justify-between items-center bg-gradient-to-r from-purple-50 to-white p-6">
+                    <div className="flex flex-col gap-2">
+                      <CardTitle className="text-xl font-bold">
+                        Đơn hàng #{order.invoiceId}
+                      </CardTitle>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <CalendarIcon className="h-4 w-4" />
+                        <span className="text-sm">{formatDate(order.createdOn)}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    <Badge className={`${getOrderStatus(order.status)} text-white px-4 py-1 rounded-full`}>
+                      {getOrderStatus(order.status).label}
+                    </Badge>
+                  </CardHeader>
+                  
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-900 mb-4">Thông tin đơn hàng</h3>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <PackageIcon className="h-5 w-5 text-purple-600" />
+                            <span className="text-gray-700">Đại lý: {order.agencyName}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <MapPinIcon className="h-5 w-5 text-purple-600" />
+                            <span className="text-gray-700">Địa chỉ : 123 Street A, City X</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <CreditCardIcon className="h-5 w-5 text-purple-600" />
+                            <span className="text-lg font-semibold text-purple-700">
+                              {formatCurrency(order.amount)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-2">
+                        <h3 className="font-semibold text-gray-900 mb-4">Chi tiết sản phẩm</h3>
+                        <div className="space-y-4">
+                          {order.items.map((item) => (
+                            <div 
+                              key={item.id}
+                              className="flex gap-4 p-4 rounded-lg hover:bg-purple-50 transition-colors duration-300"
+                            >
+                              <img 
+                                src={item.photo || "/api/placeholder/120/120"}
+                                alt={item.productName}
+                                className="w-24 h-24 object-cover rounded-lg shadow-sm"
+                              />
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{item.productName}</h4>
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-sm text-gray-600">
+                                    Số lượng: {item.quantity} x {formatCurrency(item.unitPrice)}
+                                  </p>
+                                  <p className="text-sm font-semibold text-purple-700">
+                                    Thành tiền: {formatCurrency(item.unitPrice * item.quantity)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );

@@ -49,14 +49,14 @@ const ProductPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [cart, setCart] = useState([]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); 
-  const [categories, setCategories] = useState(['all']); // State mới để lưu danh sách categories
+  const [categories, setCategories] = useState(['Tất cả']); // State mới để lưu danh sách categories
   // State cho việc kiểm tra đăng nhập
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -300,7 +300,7 @@ const ProductPage = () => {
 );
 //Filter sản phẩm dựa trên categoryId
 useEffect(() => {
-  const filteredByCategory = selectedCategory === 'all' 
+  const filteredByCategory = selectedCategory === 'Tất cả' 
     ? products 
     : products.filter(product => categoryMap[product.categoryId] === selectedCategory);
     
@@ -494,7 +494,7 @@ useEffect(() => {
             <div className="space-y-6">
               {/* Price and Stock */}
               <div className="flex justify-between items-center">
-                <p className="text-3xl font-bold text-purple-600">${product.price}</p>
+                <p className="text-3xl font-bold text-purple-600">{product.price}</p>
                 <Badge variant={product.stock > 0 ? "success" : "destructive"}>
                   {product.stock > 0 ? 'Còn hàng' : 'Còn hàng'}
                 </Badge>
@@ -603,23 +603,23 @@ useEffect(() => {
     <footer className="bg-purple-900 text-white p-8">
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <h3 className="font-bold text-lg mb-4">Customer Support</h3>
+          <h3 className="font-bold text-lg mb-4">Hỗ trợ khách hàng</h3>
           <ul className="space-y-2">
-            <li><a href="#" className="hover:text-purple-300 transition-colors">Return Policy</a></li>
+            <li><a href="#" className="hover:text-purple-300 transition-colors">Chính sách trả hàng</a></li>
             <li><a href="#" className="hover:text-purple-300 transition-colors">FAQ</a></li>
-            <li><a href="#" className="hover:text-purple-300 transition-colors">Contact Us</a></li>
+            <li><a href="#" className="hover:text-purple-300 transition-colors">Liên hệ với chúng tôi</a></li>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-lg mb-4">Company Information</h3>
           <ul className="space-y-2">
-            <li><a href="#" className="hover:text-purple-300 transition-colors">About Us</a></li>
-            <li><a href="#" className="hover:text-purple-300 transition-colors">Terms of Service</a></li>
-            <li><a href="#" className="hover:text-purple-300 transition-colors">Privacy Policy</a></li>
+            <li><a href="#" className="hover:text-purple-300 transition-colors">Về chúng tôi </a></li>
+            <li><a href="#" className="hover:text-purple-300 transition-colors">Điều khoản dịch vụ</a></li>
+            <li><a href="#" className="hover:text-purple-300 transition-colors">Chính sách bảo mật</a></li>
           </ul>
         </div>
         <div>
-          <h3 className="font-bold text-lg mb-4">Connect With Us</h3>
+          <h3 className="font-bold text-lg mb-4">Kết nối với chúng tôi </h3>
           <div className="flex space-x-4">
             <a href="#" className="hover:text-purple-300 transition-colors">
               <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
@@ -640,7 +640,7 @@ useEffect(() => {
         </div>
       </div>
       <div className="mt-8 pt-8 border-t border-purple-800 text-center">
-        <p>&copy; 2024 MyStore. All rights reserved.</p>
+        <p>&copy; 2024 cửa hàng của chúng tôi .Bảo lưu mọi quyền..</p>
       </div>
     </footer>
   );

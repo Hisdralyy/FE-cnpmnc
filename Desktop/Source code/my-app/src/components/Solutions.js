@@ -41,7 +41,7 @@ export default function solution() {
     {
       icon: <Search className="w-12 h-12 text-purple-500" />,
       title: "Tìm kiếm thông minh",
-      description: "Dễ dàng tra cứu thông tin với bộ lọc đa chiều"
+      description: "Dễ dàng tra cứu thông tin thông minh với bộ lọc đa chiều"
     }
   ];
 

@@ -149,7 +149,7 @@ const ContactPage = () => {
                     </div>
                     <div className="group-hover:translate-x-2 transition-transform duration-300">
                       <h3 className="font-medium text-gray-900">Địa Chỉ</h3>
-                      <p className="text-gray-600">123 Đường ABC, Quận XYZ, TP.HCM</p>
+                      <p className="text-gray-600">Số 23 Lô N, Đường DT 743, KCN Sóng Thần 2, Dĩ An, Bình Dương</p>
                     </div>
                   </div>
 
@@ -159,7 +159,7 @@ const ContactPage = () => {
                     </div>
                     <div className="group-hover:translate-x-2 transition-transform duration-300">
                       <h3 className="font-medium text-gray-900">Điện Thoại</h3>
-                      <p className="text-gray-600">0123.456.789</p>
+                      <p className="text-gray-600">0925360299</p>
                     </div>
                   </div>
 
@@ -169,7 +169,7 @@ const ContactPage = () => {
                     </div>
                     <div className="group-hover:translate-x-2 transition-transform duration-300">
                       <h3 className="font-medium text-gray-900">Email</h3>
-                      <p className="text-gray-600">contact@company.com</p>
+                      <p className="text-gray-600">OceanVie@company.com</p>
                     </div>
                   </div>
 
@@ -186,16 +186,16 @@ const ContactPage = () => {
 
                 {/* Social Media Links */}
                 <div className="mt-8 flex space-x-4 justify-center">
-                  <a href="#" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
+                  <a href="https://www.facebook.com/lysuulong" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
                     <Facebook className="w-5 h-5 text-purple-600" />
                   </a>
-                  <a href="#" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
+                  <a href="https://www.facebook.com/lysuulong" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
                     <Twitter className="w-5 h-5 text-purple-600" />
                   </a>
-                  <a href="#" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
+                  <a href="https://www.facebook.com/lysuulong" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
                     <Linkedin className="w-5 h-5 text-purple-600" />
                   </a>
-                  <a href="#" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
+                  <a href="https://www.facebook.com/lysuulong" className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
                     <Instagram className="w-5 h-5 text-purple-600" />
                   </a>
                 </div>
@@ -283,7 +283,7 @@ const ContactPage = () => {
 
                 <Button 
                   type="submit" 
-                  className={`w-full bg-purple-600 hover:bg-purple-700 transition-all duration-300 ${
+                  className={`w-full bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 ${
                     isLoading ? 'opacity-75 cursor-not-allowed' : ''
                   }`}
                   disabled={isLoading}
@@ -353,7 +353,7 @@ const ContactPage = () => {
               { label: "Khách Hàng", value: "1000+", icon: "👥" },
               { label: "Đại Lý", value: "50+", icon: "🏢" },
               { label: "Sản Phẩm", value: "500+", icon: "📦" },
-              { label: "Năm Kinh Nghiệm", value: "10+", icon: "⭐" }
+              { label: "Năm Kinh Nghiệm", value: "3+", icon: "⭐" }
             ].map((stat, index) => (
               <Card 
                 key={index} 
@@ -387,7 +387,7 @@ const ContactPage = () => {
                     placeholder="Nhập email của bạn"
                     className="border-purple-200 focus:border-purple-400"
                   />
-                  <Button className="bg-purple-600 hover:bg-purple-700 transition-all duration-300">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300">
                     Đăng ký
                   </Button>
                 </div>

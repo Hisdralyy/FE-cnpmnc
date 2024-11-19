@@ -181,7 +181,7 @@ const CartSummary = ({ cartTotal }) => {
 
       {/* Hiển thị phí ship là "FREE" với kiểu chữ nổi bật */}
       <div className="flex justify-between text-sm pt-2 items-center">
-        <span className="text-gray-600">Phí ship</span>
+        <span className="text-gray-600">Phí vận chuyển</span>
         <span className="font-medium text-purple-500  font-bold tracking-wide bg-purple-100 px-3 py-1 rounded-full shadow-sm">
           Miễn phí
         </span>
@@ -303,7 +303,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
                         <Store className="w-5 h-5 text-gray-500" />
                         <div>
                           <p className="text-sm text-gray-500">Đại lý</p>
-                          <p className="font-medium">Công ty TNHH ABC</p>
+                          <p className="font-medium">Công ty TNHH LocasC</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -324,7 +324,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails }) => {
                         <MapPin className="w-5 h-5 text-gray-500 mt-1" />
                         <div>
                           <p className="text-sm text-gray-500">Địa chỉ giao hàng</p>
-                          <p className="font-medium">123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</p>
+                          <p className="font-medium">123 Street A, City X                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
